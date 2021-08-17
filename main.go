@@ -14,6 +14,7 @@ import (
 	"github.com/Financial-Times/http-handlers-go/v2/httphandlers"
 	status "github.com/Financial-Times/service-status-go/httphandlers"
 	"github.com/gorilla/mux"
+	"github.com/ivan-p-nikolov/jeager-service-example/fttracing"
 	cli "github.com/jawher/mow.cli"
 	metrics "github.com/rcrowley/go-metrics"
 )
@@ -72,7 +73,7 @@ func main() {
 	app.Action = func() {
 		log.Infof("Starting with system code: %s, app name: %s, port: %s", *appSystemCode, *appName, *port)
 		//
-		shutdown, err := initTracing(*appName)
+		shutdown, err := fttracing.InitTracing(*appName)
 		if err != nil {
 			log.WithError(err).Warn("failed to init tracing")
 		}
@@ -136,9 +137,9 @@ func registerEndpoints(healthService *HealthService, apiEndpoint api.Endpoint, l
 	// add services router and register endpoints specific to this service only
 	servicesRouter := mux.NewRouter()
 	//TODO: add real handlers
-	servicesRouter.HandleFunc("/first", First(newHTTPClient(http.DefaultTransport))).Methods("GET")
+	servicesRouter.HandleFunc("/first", First(fttracing.NewHTTPClient(http.DefaultTransport))).Methods("GET")
 	servicesRouter.HandleFunc("/second", Second()).Methods("GET")
-	addTelemetry(servicesRouter, "service-name")
+	fttracing.AddTelemetry(servicesRouter, "service-name")
 	// wrap the handler with certain middlewares providing logging of the requests,
 	// sending metrics and handler time out on certain time interval
 	var wrappedServicesRouter http.Handler = servicesRouter

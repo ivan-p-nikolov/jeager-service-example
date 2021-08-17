@@ -1,4 +1,4 @@
-module github.com/Financial-Times/cm-go-service
+module github.com/ivan-p-nikolov/jeager-service-example
 
 go 1.16
 

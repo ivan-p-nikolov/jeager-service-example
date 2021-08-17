@@ -1,4 +1,4 @@
-package main
+package fttracing
 
 import (
 	"context"
@@ -17,7 +17,7 @@ import (
 	semconv "go.opentelemetry.io/otel/semconv/v1.4.0"
 )
 
-func initTracing(serviceName string) (context.CancelFunc, error) {
+func InitTracing(serviceName string) (context.CancelFunc, error) {
 	// Create the Jaeger exporter
 	exp, err := jaeger.New(jaeger.WithCollectorEndpoint())
 	if err != nil {
@@ -44,7 +44,7 @@ func initTracing(serviceName string) (context.CancelFunc, error) {
 	}, nil
 }
 
-func addTelemetry(r *mux.Router, name string) *mux.Router {
+func AddTelemetry(r *mux.Router, name string) *mux.Router {
 	r.Use(otelmux.Middleware(name,
 		otelmux.WithPropagators(
 			propagation.NewCompositeTextMapPropagator(
@@ -56,7 +56,7 @@ func addTelemetry(r *mux.Router, name string) *mux.Router {
 	return r
 }
 
-func newHTTPClient(base http.RoundTripper) http.Client {
+func NewHTTPClient(base http.RoundTripper) http.Client {
 	return http.Client{
 		Transport: otelhttp.NewTransport(base,
 			otelhttp.WithPropagators(
