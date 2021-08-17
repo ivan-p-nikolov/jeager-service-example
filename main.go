@@ -8,15 +8,14 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/gorilla/mux"
-	cli "github.com/jawher/mow.cli"
-	metrics "github.com/rcrowley/go-metrics"
-
 	api "github.com/Financial-Times/api-endpoint"
 	fthealth "github.com/Financial-Times/go-fthealth/v1_1"
 	logger "github.com/Financial-Times/go-logger/v2"
 	"github.com/Financial-Times/http-handlers-go/v2/httphandlers"
 	status "github.com/Financial-Times/service-status-go/httphandlers"
+	"github.com/gorilla/mux"
+	cli "github.com/jawher/mow.cli"
+	metrics "github.com/rcrowley/go-metrics"
 )
 
 const (
@@ -72,6 +71,12 @@ func main() {
 
 	app.Action = func() {
 		log.Infof("Starting with system code: %s, app name: %s, port: %s", *appSystemCode, *appName, *port)
+		//
+		shutdown, err := initTracing(*appName)
+		if err != nil {
+			log.WithError(err).Warn("failed to init tracing")
+		}
+		defer shutdown()
 
 		hc := HealthConfig{
 			appSystemCode:  *appSystemCode,
@@ -131,8 +136,9 @@ func registerEndpoints(healthService *HealthService, apiEndpoint api.Endpoint, l
 	// add services router and register endpoints specific to this service only
 	servicesRouter := mux.NewRouter()
 	//TODO: add real handlers
-	servicesRouter.HandleFunc("/test", TestHandler).Methods("GET")
-
+	servicesRouter.HandleFunc("/first", First(newHTTPClient(http.DefaultTransport))).Methods("GET")
+	servicesRouter.HandleFunc("/second", Second()).Methods("GET")
+	addTelemetry(servicesRouter, "service-name")
 	// wrap the handler with certain middlewares providing logging of the requests,
 	// sending metrics and handler time out on certain time interval
 	var wrappedServicesRouter http.Handler = servicesRouter
